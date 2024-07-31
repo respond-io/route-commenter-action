@@ -32228,6 +32228,12 @@ async function main() {
       console.log(routes);
 
       if (routes.length > 0) {
+        const { data: pr } = await octokit.rest.pulls.get({
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          pull_number: context.payload.pull_request.number,
+        });
+
         for (const route of routes) {
           const comment = `Route change detected:\n\`\`\`javascript\n${route.code}\n\`\`\``;
 
@@ -32236,9 +32242,9 @@ async function main() {
             repo: context.repo.repo,
             pull_number: context.payload.pull_request.number,
             body: comment,
+            commit_id: pr.head.sha,
             path: file,
-            line: route.startLine,
-            side: 'RIGHT',
+            position: route.startLine,
           });
         }
       }
