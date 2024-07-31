@@ -32202,9 +32202,9 @@ async function getDiffHunks(filePath) {
   const diffOutput = execSync(`git diff --unified=0 HEAD~1 HEAD ${filePath}`).toString();
   const diffHunks = diffOutput.split('\n').filter(line => line.startsWith('@@')).map(hunk => {
     const match = hunk.match(/@@ \-(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
-    console.log('-------------->>')
-    console.log(match)
-    console.log('-------------->>')
+    // console.log('-------------->>')
+    // console.log(match)
+    // console.log('-------------->>')
     return {
       originalStart: parseInt(match[1], 10),
       newStart: parseInt(match[2], 10),
@@ -32216,7 +32216,7 @@ async function getDiffHunks(filePath) {
 
 function findDiffHunkLineNumber(diffHunks, targetLine) {
 
-  console.log('..............', {diffHunks, targetLine})
+  //console.log('..............', {diffHunks, targetLine})
   for (const hunk of diffHunks) {
     if (targetLine >= hunk.newStart) {
       return targetLine - hunk.newStart + hunk.originalStart;
@@ -32229,7 +32229,7 @@ async function main() {
   const rootPath = 'service';
   const changedFiles = await getChangedFiles();
 
-  console.log(changedFiles);
+  //console.log(changedFiles);
 
   for (const file of changedFiles) {
     console.log(file, rootPath);
@@ -32249,53 +32249,55 @@ async function main() {
           return [];
         });
 
-      console.log(changedLines);
+      
 
       const routes = detectRoutesInFile(file, changedLines);
-
+      console.log('-------11-----------');
+      console.log(changedLines);
       console.log(routes);
+      console.log('--------22----------');
 
-      if (routes.length > 0) {
-        const { data: pr } = await octokit.rest.pulls.get({
-          owner: context.repo.owner,
-          repo: context.repo.repo,
-          pull_number: context.payload.pull_request.number,
-        });
+      // if (routes.length > 0) {
+      //   const { data: pr } = await octokit.rest.pulls.get({
+      //     owner: context.repo.owner,
+      //     repo: context.repo.repo,
+      //     pull_number: context.payload.pull_request.number,
+      //   });
 
-        for (const route of routes) {
-          const comment = `Route change detected:\n\`\`\`javascript\n${route.code}\n\`\`\``;
-          const diffLine = findDiffHunkLineNumber(diffHunks, route.startLine);
+      //   for (const route of routes) {
+      //     const comment = `Route change detected:\n\`\`\`javascript\n${route.code}\n\`\`\``;
+      //     const diffLine = findDiffHunkLineNumber(diffHunks, route.startLine);
 
-          console.log(diffHunks);
-          console.log(diffLine);
+      //     //console.log(diffHunks);
+      //     //console.log(diffLine);
 
-          if (diffLine !== null) {
-            console.log({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
-              body: comment,
-              commit_id: pr.head.sha,
-              path: file,
-              line: diffLine,
-              side: 'RIGHT',
-            });
+      //     if (diffLine !== null) {
+      //       console.log({
+      //         owner: context.repo.owner,
+      //         repo: context.repo.repo,
+      //         pull_number: context.payload.pull_request.number,
+      //         body: comment,
+      //         commit_id: pr.head.sha,
+      //         path: file,
+      //         line: diffLine,
+      //         side: 'RIGHT',
+      //       });
 
-            await octokit.rest.pulls.createReviewComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
-              body: comment,
-              commit_id: pr.head.sha,
-              path: file,
-              line: 24,
-              side: 'RIGHT',
-            });
-          } else {
-            console.error(`Could not find diff line for ${file} at line ${route.startLine}`);
-          }
-        }
-      }
+      //       await octokit.rest.pulls.createReviewComment({
+      //         owner: context.repo.owner,
+      //         repo: context.repo.repo,
+      //         pull_number: context.payload.pull_request.number,
+      //         body: comment,
+      //         commit_id: pr.head.sha,
+      //         path: file,
+      //         line: 24,
+      //         side: 'RIGHT',
+      //       });
+      //     } else {
+      //       console.error(`Could not find diff line for ${file} at line ${route.startLine}`);
+      //     }
+      //   }
+      // }
     }
   }
 }
