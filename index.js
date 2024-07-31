@@ -117,9 +117,6 @@ async function getDiffHunks(filePath) {
   const diffOutput = execSync(`git diff --unified=0 HEAD~1 HEAD ${filePath}`).toString();
   const diffHunks = diffOutput.split('\n').filter(line => line.startsWith('@@')).map(hunk => {
     const match = hunk.match(/@@ \-(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
-    // console.log('-------------->>')
-    // console.log(match)
-    // console.log('-------------->>')
     return {
       originalStart: parseInt(match[1], 10),
       newStart: parseInt(match[2], 10),
@@ -130,8 +127,6 @@ async function getDiffHunks(filePath) {
 }
 
 function findDiffHunkLineNumber(diffHunks, targetLine) {
-
-  //console.log('..............', {diffHunks, targetLine})
   for (const hunk of diffHunks) {
     if (targetLine >= hunk.newStart) {
       return targetLine - hunk.newStart + hunk.originalStart;
@@ -151,7 +146,7 @@ function getCommentingLines(routes, changedLines) {
     });
   });
   return commentingLines;
-};
+}
 
 async function addPRComments(commentingLines, file) {
   if (commentingLines.length > 0) {
@@ -183,6 +178,15 @@ async function addPRComments(commentingLines, file) {
 
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
+
+    // Request changes after adding comments
+    await octokit.rest.pulls.createReview({
+      owner: context.repo.owner,
+      repo: context.repo.repo,
+      pull_number: context.payload.pull_request.number,
+      event: 'REQUEST_CHANGES',
+      body: 'Please address the comments related to the route changes.',
+    });
   }
 }
 
@@ -190,10 +194,7 @@ async function main() {
   const rootPath = 'service';
   const changedFiles = await getChangedFiles();
 
-  //console.log(changedFiles);
-
   for (const file of changedFiles) {
-    console.log(file, rootPath);
     if (file.startsWith(rootPath) && file.includes('routes') && file.endsWith('.js')) {
       const diffHunks = await getDiffHunks(file);
       const diffOutput = execSync(`git diff --unified=0 HEAD~1 HEAD ${file}`).toString();
