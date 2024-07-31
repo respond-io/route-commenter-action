@@ -113,6 +113,28 @@ function detectRoutesInFile(filePath, changedLines) {
   return routes.filter(route => changedLines.some(line => line >= route.startLine && line <= route.endLine));
 }
 
+async function getDiffHunks(filePath) {
+  const diffOutput = execSync(`git diff --unified=0 HEAD~1 HEAD ${filePath}`).toString();
+  const diffHunks = diffOutput.split('\n').filter(line => line.startsWith('@@')).map(hunk => {
+    const match = hunk.match(/@@ \-(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
+    return {
+      originalStart: parseInt(match[1], 10),
+      newStart: parseInt(match[2], 10),
+    };
+  });
+
+  return diffHunks;
+}
+
+function findDiffHunkLineNumber(diffHunks, targetLine) {
+  for (const hunk of diffHunks) {
+    if (targetLine >= hunk.newStart) {
+      return targetLine - hunk.newStart + hunk.originalStart;
+    }
+  }
+  return null;
+}
+
 async function main() {
   const rootPath = 'service';
   const changedFiles = await getChangedFiles();
@@ -122,6 +144,7 @@ async function main() {
   for (const file of changedFiles) {
     console.log(file, rootPath);
     if (file.startsWith(rootPath) && file.includes('routes') && file.endsWith('.js')) {
+      const diffHunks = await getDiffHunks(file);
       const diffOutput = execSync(`git diff --unified=0 HEAD~1 HEAD ${file}`).toString();
       const changedLines = diffOutput
         .split('\n')
@@ -151,17 +174,35 @@ async function main() {
 
         for (const route of routes) {
           const comment = `Route change detected:\n\`\`\`javascript\n${route.code}\n\`\`\``;
+          const diffLine = findDiffHunkLineNumber(diffHunks, route.startLine);
 
-          await octokit.rest.pulls.createReviewComment({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            pull_number: context.payload.pull_request.number,
-            body: comment,
-            commit_id: pr.head.sha,
-            path: file,
-            line: route.startLine,
-            side: 'RIGHT',
-          });
+          console.log(diffLine);
+
+          if (diffLine !== null) {
+            console.log({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              body: comment,
+              commit_id: pr.head.sha,
+              path: file,
+              line: diffLine,
+              side: 'RIGHT',
+            });
+
+            await octokit.rest.pulls.createReviewComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              body: comment,
+              commit_id: pr.head.sha,
+              path: file,
+              line: diffLine,
+              side: 'RIGHT',
+            });
+          } else {
+            console.error(`Could not find diff line for ${file} at line ${route.startLine}`);
+          }
         }
       }
     }
