@@ -32261,6 +32261,7 @@ async function main() {
           const comment = `Route change detected:\n\`\`\`javascript\n${route.code}\n\`\`\``;
           const diffLine = findDiffHunkLineNumber(diffHunks, route.startLine);
 
+          console.log(diffHunks);
           console.log(diffLine);
 
           if (diffLine !== null) {
