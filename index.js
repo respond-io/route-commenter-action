@@ -159,6 +159,7 @@ async function getExistingComments(owner, repo, pullNumber, botUsername) {
 }
 
 async function addPRComments(commentingLines, file, existingComments) {
+  let commentAdded = false;
   if (commentingLines.length > 0) {
     const { data: pr } = await octokit.rest.pulls.get({
       owner: context.repo.owner,
@@ -173,8 +174,6 @@ async function addPRComments(commentingLines, file, existingComments) {
     - [ ] Have you checked the route is not breaking any existing tests?
     - [ ] Have you documented the route changes?
     `;
-
-    let commentAdded = false;
 
     for (const line of commentingLines) {
       const existingComment = existingComments.find(comment => comment.path === file && comment.original_line === line);
@@ -195,18 +194,9 @@ async function addPRComments(commentingLines, file, existingComments) {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
-
-    if (commentAdded) {
-      // Request changes after adding comments
-      await octokit.rest.pulls.createReview({
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        pull_number: context.payload.pull_request.number,
-        event: 'REQUEST_CHANGES',
-        body: 'Please address the comments related to the route changes.',
-      });
-    }
   }
+
+  return { commentAdded };
 }
 
 async function main() {
@@ -223,6 +213,8 @@ async function main() {
   } catch (error) {
     console.error(`Error setting Git config: ${error.message}`);
   }
+
+  let commentAdded = false;
 
   for (const file of changedFiles) {
     if (file.startsWith(rootPath) && file.includes('routes') && file.endsWith('.js')) {
@@ -244,10 +236,20 @@ async function main() {
       const routes = detectRoutesInFile(file, changedLines);
       const commentingLines = getCommentingLines(routes, changedLines);
 
-      const existingComments = await getExistingComments(context.repo.owner, context.repo.repo, context.payload.pull_request.number, botUsername);
-
-      await addPRComments(commentingLines, file, existingComments);
+      const status = await addPRComments(commentingLines, file, existingComments);
+      commentAdded = commentAdded || status.commentAdded;
     }
+  }
+
+  if (commentAdded) {
+    // Request changes after adding comments
+    await octokit.rest.pulls.createReview({
+      owner: context.repo.owner,
+      repo: context.repo.repo,
+      pull_number: context.payload.pull_request.number,
+      event: 'REQUEST_CHANGES',
+      body: 'Please address the comments related to the route changes.',
+    });
   }
 }
 
