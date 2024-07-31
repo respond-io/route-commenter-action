@@ -174,7 +174,7 @@ async function addPRComments(commentingLines, file, existingComments) {
     - [ ] Have you documented the route changes?
     `;
 
-    const commentAdded = false;
+    let commentAdded = false;
 
     for (const line of commentingLines) {
       const existingComment = existingComments.find(comment => comment.path === file && comment.original_line === line);
