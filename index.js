@@ -140,6 +140,52 @@ function findDiffHunkLineNumber(diffHunks, targetLine) {
   return null;
 }
 
+function getCommentingLines(routes, changedLines) {
+  const commentingLines = [];
+  changedLines.sort().forEach((line) => {
+    routes.forEach((route, index) => {
+      if (route.selectedLine == undefined && line >= route.startLine && line <= route.endLine) {
+        routes[index]['selectedLine'] = line;
+        commentingLines.push(line);
+      }
+    });
+  });
+  return commentingLines;
+};
+
+async function addPRComments(commentingLines, file) {
+  if (commentingLines.length > 0) {
+    const { data: pr } = await octokit.rest.pulls.get({
+      owner: context.repo.owner,
+      repo: context.repo.repo,
+      pull_number: context.payload.pull_request.number,
+    });
+
+    const comment = `
+    # Route change detected:
+    - [ ] Have you checked ACL middlewares configs?
+    - [ ] Have you checked the route is not breaking any existing functionality?
+    - [ ] Have you checked the route is not breaking any existing tests?
+    - [ ] Have you documented the route changes?
+    `;
+
+    for (const line of commentingLines) {
+      await octokit.rest.pulls.createReviewComment({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        pull_number: context.payload.pull_request.number,
+        body: comment,
+        commit_id: pr.head.sha,
+        path: file,
+        line: line,
+        side: 'RIGHT',
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+}
+
 async function main() {
   const rootPath = 'service';
   const changedFiles = await getChangedFiles();
@@ -164,55 +210,17 @@ async function main() {
           return [];
         });
 
-      
+
 
       const routes = detectRoutesInFile(file, changedLines);
+      const commentingLines = getCommentingLines(routes, changedLines);
       console.log('-------11-----------');
       console.log(changedLines);
       console.log(routes);
+      console.log(commentingLines);
       console.log('--------22----------');
 
-      // if (routes.length > 0) {
-      //   const { data: pr } = await octokit.rest.pulls.get({
-      //     owner: context.repo.owner,
-      //     repo: context.repo.repo,
-      //     pull_number: context.payload.pull_request.number,
-      //   });
-
-      //   for (const route of routes) {
-      //     const comment = `Route change detected:\n\`\`\`javascript\n${route.code}\n\`\`\``;
-      //     const diffLine = findDiffHunkLineNumber(diffHunks, route.startLine);
-
-      //     //console.log(diffHunks);
-      //     //console.log(diffLine);
-
-      //     if (diffLine !== null) {
-      //       console.log({
-      //         owner: context.repo.owner,
-      //         repo: context.repo.repo,
-      //         pull_number: context.payload.pull_request.number,
-      //         body: comment,
-      //         commit_id: pr.head.sha,
-      //         path: file,
-      //         line: diffLine,
-      //         side: 'RIGHT',
-      //       });
-
-      //       await octokit.rest.pulls.createReviewComment({
-      //         owner: context.repo.owner,
-      //         repo: context.repo.repo,
-      //         pull_number: context.payload.pull_request.number,
-      //         body: comment,
-      //         commit_id: pr.head.sha,
-      //         path: file,
-      //         line: 24,
-      //         side: 'RIGHT',
-      //       });
-      //     } else {
-      //       console.error(`Could not find diff line for ${file} at line ${route.startLine}`);
-      //     }
-      //   }
-      // }
+      await addPRComments(commentingLines, file);
     }
   }
 }
