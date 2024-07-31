@@ -1,0 +1,15 @@
+{
+  "name": "route-commenter-action",
+  "version": "1.0.0",
+  "description": "A GitHub Action to add comments to changed routes in PRs.",
+  "main": "index.js",
+  "scripts": {
+    "build": "rm -rf build && ncc build index.js -o dist"
+  },
+  "author": "Hasitha Gamage",
+  "license": "MIT",
+  "dependencies": {
+    "@actions/github": "^5.1.1",
+    "@octokit/rest": "^18.12.0"
+  }
+}
