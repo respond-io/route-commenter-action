@@ -148,7 +148,16 @@ function getCommentingLines(routes, changedLines) {
   return commentingLines;
 }
 
-async function addPRComments(commentingLines, file) {
+async function getExistingComments(owner, repo, pullNumber, botUsername) {
+  const { data: comments } = await octokit.rest.pulls.listReviewComments({
+    owner,
+    repo,
+    pull_number: pullNumber,
+  });
+  return comments.filter(comment => comment.user.login === botUsername);
+}
+
+async function addPRComments(commentingLines, file, existingComments, botUsername) {
   if (commentingLines.length > 0) {
     const { data: pr } = await octokit.rest.pulls.get({
       owner: context.repo.owner,
@@ -156,7 +165,7 @@ async function addPRComments(commentingLines, file) {
       pull_number: context.payload.pull_request.number,
     });
 
-    const comment = `
+    const commentBody = `
     # Route change detected:
     - [ ] Have you checked ACL middlewares configs?
     - [ ] Have you checked the route is not breaking any existing functionality?
@@ -165,18 +174,21 @@ async function addPRComments(commentingLines, file) {
     `;
 
     for (const line of commentingLines) {
-      await octokit.rest.pulls.createReviewComment({
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        pull_number: context.payload.pull_request.number,
-        body: comment,
-        commit_id: pr.head.sha,
-        path: file,
-        line: line,
-        side: 'RIGHT',
-      });
+      const existingComment = existingComments.find(comment => comment.path === file && comment.original_line === line);
+      if (!existingComment) {
+        await octokit.rest.pulls.createReviewComment({
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          pull_number: context.payload.pull_request.number,
+          body: commentBody,
+          commit_id: pr.head.sha,
+          path: file,
+          line: line,
+          side: 'RIGHT',
+        });
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     }
 
     // Request changes after adding comments
@@ -193,6 +205,8 @@ async function addPRComments(commentingLines, file) {
 async function main() {
   const rootPath = 'service';
   const changedFiles = await getChangedFiles();
+
+  const botUsername = context.actor; // GitHub bot's username
 
   for (const file of changedFiles) {
     if (file.startsWith(rootPath) && file.includes('routes') && file.endsWith('.js')) {
@@ -214,7 +228,9 @@ async function main() {
       const routes = detectRoutesInFile(file, changedLines);
       const commentingLines = getCommentingLines(routes, changedLines);
 
-      await addPRComments(commentingLines, file);
+      const existingComments = await getExistingComments(context.repo.owner, context.repo.repo, context.payload.pull_request.number, botUsername);
+
+      await addPRComments(commentingLines, file, existingComments, botUsername);
     }
   }
 }
