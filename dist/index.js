@@ -32202,10 +32202,10 @@ async function main() {
   const rootPath = 'service';
   const changedFiles = await getChangedFiles();
 
-  console.log(changedFiles)
+  console.log(changedFiles);
 
   for (const file of changedFiles) {
-    console.log(file, rootPath)
+    console.log(file, rootPath);
     if (file.startsWith(rootPath) && file.includes('routes') && file.endsWith('.js')) {
       const diffOutput = execSync(`git diff --unified=0 HEAD~1 HEAD ${file}`).toString();
       const changedLines = diffOutput
@@ -32221,29 +32221,29 @@ async function main() {
           return [];
         });
 
-        console.log(changedLines)
+      console.log(changedLines);
 
       const routes = detectRoutesInFile(file, changedLines);
 
-      console.log(routes)
+      console.log(routes);
 
       if (routes.length > 0) {
-        routes.forEach(route => {
-          const comment = `// route changes\n${route.code}`;
-          const fileContent = fs.readFileSync(file, 'utf8');
-          const newContent = fileContent
-            .split('\n')
-            .map((line, index) => (index + 1 === route.startLine ? comment : line))
-            .join('\n');
+        for (const route of routes) {
+          const comment = `Route change detected:\n\`\`\`javascript\n${route.code}\n\`\`\``;
 
-          fs.writeFileSync(file, newContent);
-          execSync(`git add ${file}`);
-        });
+          await octokit.rest.pulls.createReviewComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.payload.pull_request.number,
+            body: comment,
+            path: file,
+            line: route.startLine,
+            side: 'RIGHT',
+          });
+        }
       }
     }
   }
-
-  execSync('git commit -m "Add route changes comments"');
 }
 
 main();
