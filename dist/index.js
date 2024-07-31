@@ -32240,8 +32240,6 @@ async function getExistingComments(owner, repo, pullNumber, botUsername) {
     pull_number: pullNumber,
   });
 
-  console.log('>>>>>>>>', botUsername);
-
   return comments.filter(comment => comment.user.login === botUsername);
 }
 
@@ -32260,8 +32258,6 @@ async function addPRComments(commentingLines, file, existingComments) {
     - [ ] Have you checked the route is not breaking any existing tests?
     - [ ] Have you documented the route changes?
     `;
-
-    console.log(existingComments)
 
     for (const line of commentingLines) {
       const existingComment = existingComments.find(comment => comment.path === file && comment.original_line === line);
@@ -32298,6 +32294,14 @@ async function main() {
 
   //const botUsername = context.actor; // GitHub bot's username
   const botUsername = 'github-actions[bot]';
+
+  // Configure Git user
+  try {
+    execSync('git config --global user.email "action@github.com"');
+    execSync('git config --global user.name "GitHub Action"');
+  } catch (error) {
+    console.error(`Error setting Git config: ${error.message}`);
+  }
 
   for (const file of changedFiles) {
     if (file.startsWith(rootPath) && file.includes('routes') && file.endsWith('.js')) {
