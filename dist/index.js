@@ -32132,6 +32132,7 @@ function getRouteFiles(folderPath) {
 }
 
 function detectRoutesInFile(filePath, changedLines) {
+  console.log('..............', {filePath, changedLines})
   const data = fs.readFileSync(filePath, 'utf8');
   const lines = data.split('\n');
   let routerVariable = null;
