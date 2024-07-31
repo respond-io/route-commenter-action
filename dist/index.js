@@ -32288,7 +32288,7 @@ async function main() {
               body: comment,
               commit_id: pr.head.sha,
               path: file,
-              line: diffLine,
+              line: 33,
               side: 'RIGHT',
             });
           } else {
