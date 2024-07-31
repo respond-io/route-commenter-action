@@ -32132,7 +32132,6 @@ function getRouteFiles(folderPath) {
 }
 
 function detectRoutesInFile(filePath, changedLines) {
-  console.log('..............', {filePath, changedLines})
   const data = fs.readFileSync(filePath, 'utf8');
   const lines = data.split('\n');
   let routerVariable = null;
@@ -32213,6 +32212,8 @@ async function getDiffHunks(filePath) {
 }
 
 function findDiffHunkLineNumber(diffHunks, targetLine) {
+
+  console.log('..............', {diffHunks, targetLine})
   for (const hunk of diffHunks) {
     if (targetLine >= hunk.newStart) {
       return targetLine - hunk.newStart + hunk.originalStart;
