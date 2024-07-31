@@ -117,6 +117,9 @@ async function getDiffHunks(filePath) {
   const diffOutput = execSync(`git diff --unified=0 HEAD~1 HEAD ${filePath}`).toString();
   const diffHunks = diffOutput.split('\n').filter(line => line.startsWith('@@')).map(hunk => {
     const match = hunk.match(/@@ \-(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
+    console.log('-------------->>')
+    console.log(match)
+    console.log('-------------->>')
     return {
       originalStart: parseInt(match[1], 10),
       newStart: parseInt(match[2], 10),
