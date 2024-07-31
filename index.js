@@ -155,12 +155,10 @@ async function getExistingComments(owner, repo, pullNumber, botUsername) {
     pull_number: pullNumber,
   });
 
-  console.log(comments);
-
   return comments.filter(comment => comment.user.login === botUsername);
 }
 
-async function addPRComments(commentingLines, file, existingComments, botUsername) {
+async function addPRComments(commentingLines, file, existingComments) {
   if (commentingLines.length > 0) {
     const { data: pr } = await octokit.rest.pulls.get({
       owner: context.repo.owner,
@@ -175,6 +173,8 @@ async function addPRComments(commentingLines, file, existingComments, botUsernam
     - [ ] Have you checked the route is not breaking any existing tests?
     - [ ] Have you documented the route changes?
     `;
+
+    console.log(existingComments)
 
     for (const line of commentingLines) {
       const existingComment = existingComments.find(comment => comment.path === file && comment.original_line === line);
@@ -233,7 +233,7 @@ async function main() {
 
       const existingComments = await getExistingComments(context.repo.owner, context.repo.repo, context.payload.pull_request.number, botUsername);
 
-      await addPRComments(commentingLines, file, existingComments, botUsername);
+      await addPRComments(commentingLines, file, existingComments);
     }
   }
 }
