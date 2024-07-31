@@ -140,6 +140,8 @@ async function main() {
 
       const routes = detectRoutesInFile(file, changedLines);
 
+      console.log(routes)
+
       if (routes.length > 0) {
         routes.forEach(route => {
           const comment = `// route changes\n${route.code}`;
