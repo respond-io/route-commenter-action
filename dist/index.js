@@ -32240,6 +32240,8 @@ async function getExistingComments(owner, repo, pullNumber, botUsername) {
     pull_number: pullNumber,
   });
 
+  console.log('>>>>>>>>', botUsername);
+
   return comments.filter(comment => comment.user.login === botUsername);
 }
 
