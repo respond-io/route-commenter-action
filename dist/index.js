@@ -32321,6 +32321,8 @@ async function main() {
       const routes = detectRoutesInFile(file, changedLines);
       const commentingLines = getCommentingLines(routes, changedLines);
 
+      const existingComments = await getExistingComments(context.repo.owner, context.repo.repo, context.payload.pull_request.number, botUsername);
+
       const status = await addPRComments(commentingLines, file, existingComments);
       commentAdded = commentAdded || status.commentAdded;
     }
