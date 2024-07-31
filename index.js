@@ -154,6 +154,9 @@ async function getExistingComments(owner, repo, pullNumber, botUsername) {
     repo,
     pull_number: pullNumber,
   });
+
+  console.log(comments);
+
   return comments.filter(comment => comment.user.login === botUsername);
 }
 
