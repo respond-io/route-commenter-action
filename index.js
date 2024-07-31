@@ -12,7 +12,7 @@ async function getChangedFiles() {
   const owner = context.repo.owner;
   const repo = context.repo.repo;
 
-  const { data: files } = await octokit.pulls.listFiles({
+  const { data: files } = await octokit.rest.pulls.listFiles({
     owner,
     repo,
     pull_number: prNumber,
