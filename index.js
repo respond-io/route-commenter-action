@@ -210,15 +210,8 @@ async function main() {
           return [];
         });
 
-
-
       const routes = detectRoutesInFile(file, changedLines);
       const commentingLines = getCommentingLines(routes, changedLines);
-      console.log('-------11-----------');
-      console.log(changedLines);
-      console.log(routes);
-      console.log(commentingLines);
-      console.log('--------22----------');
 
       await addPRComments(commentingLines, file);
     }
