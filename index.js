@@ -203,7 +203,7 @@ async function main() {
               body: comment,
               commit_id: pr.head.sha,
               path: file,
-              line: 33,
+              line: 24,
               side: 'RIGHT',
             });
           } else {
