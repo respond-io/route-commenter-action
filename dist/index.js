@@ -32259,6 +32259,8 @@ async function addPRComments(commentingLines, file, existingComments) {
     - [ ] Have you documented the route changes?
     `;
 
+    const commentAdded = false;
+
     for (const line of commentingLines) {
       const existingComment = existingComments.find(comment => comment.path === file && comment.original_line === line);
       if (!existingComment) {
@@ -32273,18 +32275,22 @@ async function addPRComments(commentingLines, file, existingComments) {
           side: 'RIGHT',
         });
 
+        commentAdded = true;
+
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
 
-    // Request changes after adding comments
-    await octokit.rest.pulls.createReview({
-      owner: context.repo.owner,
-      repo: context.repo.repo,
-      pull_number: context.payload.pull_request.number,
-      event: 'REQUEST_CHANGES',
-      body: 'Please address the comments related to the route changes.',
-    });
+    if (commentAdded) {
+      // Request changes after adding comments
+      await octokit.rest.pulls.createReview({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        pull_number: context.payload.pull_request.number,
+        event: 'REQUEST_CHANGES',
+        body: 'Please address the comments related to the route changes.',
+      });
+    }
   }
 }
 
