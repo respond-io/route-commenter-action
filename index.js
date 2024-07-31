@@ -117,7 +117,10 @@ async function main() {
   const rootPath = 'service';
   const changedFiles = await getChangedFiles();
 
+  console.log(changedFiles)
+
   for (const file of changedFiles) {
+    console.log(file, rootPath)
     if (file.startsWith(rootPath) && file.includes('routes') && file.endsWith('.js')) {
       const diffOutput = execSync(`git diff --unified=0 HEAD~1 HEAD ${file}`).toString();
       const changedLines = diffOutput
@@ -132,6 +135,8 @@ async function main() {
           }
           return [];
         });
+
+        console.log(changedLines)
 
       const routes = detectRoutesInFile(file, changedLines);
 
