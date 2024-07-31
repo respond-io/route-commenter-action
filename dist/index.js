@@ -32296,7 +32296,8 @@ async function main() {
   const rootPath = 'service';
   const changedFiles = await getChangedFiles();
 
-  const botUsername = context.actor; // GitHub bot's username
+  //const botUsername = context.actor; // GitHub bot's username
+  const botUsername = 'github-actions[bot]';
 
   for (const file of changedFiles) {
     if (file.startsWith(rootPath) && file.includes('routes') && file.endsWith('.js')) {
