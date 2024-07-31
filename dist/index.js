@@ -32244,7 +32244,8 @@ async function main() {
             body: comment,
             commit_id: pr.head.sha,
             path: file,
-            position: route.startLine,
+            line: route.startLine,
+            side: 'RIGHT',
           });
         }
       }
