@@ -2,7 +2,10 @@
 name: Route Commenter
 description: A GitHub Action to add comments to changed routes in PRs.
 author: Hasitha Gamage
-inputs: {}
+inputs:
+  comment-content-file:
+    description: 'Path to the Markdown file containing the comment content'
+    required: true
 outputs: {}
 runs:
   using: 'node20'

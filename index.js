@@ -5,6 +5,8 @@ const { Octokit } = require('@octokit/rest');
 const { context } = require('@actions/github');
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const COMMENT_FILE_PATH = process.env.INPUT_COMMENT_CONTENT_FILE;
+
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
 
 async function getChangedFiles() {
@@ -158,7 +160,7 @@ async function getExistingComments(owner, repo, pullNumber, botUsername) {
   return comments.filter(comment => comment.user.login === botUsername);
 }
 
-async function addPRComments(commentingLines, file, existingComments) {
+async function addPRComments(commentingLines, file, existingComments, commentBody) {
   let commentAdded = false;
   if (commentingLines.length > 0) {
     const { data: pr } = await octokit.rest.pulls.get({
@@ -166,14 +168,6 @@ async function addPRComments(commentingLines, file, existingComments) {
       repo: context.repo.repo,
       pull_number: context.payload.pull_request.number,
     });
-
-    const commentBody = `
-    # Route change detected:
-    - [ ] Have you checked ACL middlewares configs?
-    - [ ] Have you checked the route is not breaking any existing functionality?
-    - [ ] Have you checked the route is not breaking any existing tests?
-    - [ ] Have you documented the route changes?
-    `;
 
     for (const line of commentingLines) {
       const existingComment = existingComments.find(comment => comment.path === file && comment.original_line === line);
@@ -199,11 +193,26 @@ async function addPRComments(commentingLines, file, existingComments) {
   return { commentAdded };
 }
 
+async function getCommentBody() {
+  // Default comment body
+  let commentBody = `
+  # Route Changed
+  - [ ] Fully reviewed all the configuration changes and fully aware the effect of the route
+  `;
+
+  try {
+    commentBody = fs.readFileSync(COMMENT_FILE_PATH, 'utf8');
+  } catch (error) {
+    console.error(`Error reading comment file: ${error.message}`);
+  }
+
+  return commentBody;
+}
+
 async function main() {
   const rootPath = 'service';
   const changedFiles = await getChangedFiles();
 
-  //const botUsername = context.actor; // GitHub bot's username
   const botUsername = 'github-actions[bot]';
 
   // Configure Git user
@@ -213,6 +222,8 @@ async function main() {
   } catch (error) {
     console.error(`Error setting Git config: ${error.message}`);
   }
+
+  const commentBody = await getCommentBody();
 
   let commentAdded = false;
 
@@ -238,7 +249,7 @@ async function main() {
 
       const existingComments = await getExistingComments(context.repo.owner, context.repo.repo, context.payload.pull_request.number, botUsername);
 
-      const status = await addPRComments(commentingLines, file, existingComments);
+      const status = await addPRComments(commentingLines, file, existingComments, commentBody);
       commentAdded = commentAdded || status.commentAdded;
     }
   }
