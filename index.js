@@ -196,7 +196,7 @@ async function addPRComments(commentingLines, file, existingComments, commentBod
 async function getCommentBody() {
   // Default comment body
   let commentBody = `
-  # Route Changed
+  ### Route Changed
   - [ ] Fully reviewed all the configuration changes and fully aware the effect of the route
   `;
 
