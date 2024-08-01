@@ -203,7 +203,7 @@ async function getCommentBody() {
   try {
     commentBody = fs.readFileSync(COMMENT_FILE_PATH, 'utf8');
   } catch (error) {
-    console.error(`Error reading comment file: ${error.message}`);
+    console.error('👿 Unable to read comment content file. Using default comment body.');
   }
 
   return commentBody;
@@ -220,7 +220,7 @@ async function main() {
     execSync('git config --global user.email "action@github.com"');
     execSync('git config --global user.name "GitHub Action"');
   } catch (error) {
-    console.error(`Error setting Git config: ${error.message}`);
+    console.error(`👿 Error setting Git config: ${error.message}`);
   }
 
   const commentBody = await getCommentBody();
