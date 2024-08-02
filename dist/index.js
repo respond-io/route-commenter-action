@@ -32294,6 +32294,32 @@ async function getCommentBody() {
   return commentBody;
 }
 
+async function addLabelIfNotExists(owner, repo, prNumber, labelName, labelColor) {
+  const { data: labels } = await octokit.rest.pulls.listLabelsOnIssue({
+    owner,
+    repo,
+    pull_number: prNumber,
+  });
+
+  const labelExists = labels.some(label => label.name === labelName);
+
+  if (!labelExists) {
+    await octokit.rest.pulls.addLabels({
+      owner,
+      repo,
+      pull_number: prNumber,
+      labels: [labelName],
+    });
+
+    await octokit.rest.pulls.updateLabel({
+      owner,
+      repo,
+      name: labelName,
+      color: labelColor,
+    });
+  }
+}
+
 async function main() {
   const rootPath = 'service';
   const changedFiles = await getChangedFiles();
@@ -32348,6 +32374,9 @@ async function main() {
       event: 'REQUEST_CHANGES',
       body: 'Please address the comments related to the route changes.',
     });
+
+    // Add 'routes-changed' label with red color
+    await addLabelIfNotExists(context.repo.owner, context.repo.repo, context.payload.pull_request.number, 'routes-changed', 'ff0000');
   }
 }
 
