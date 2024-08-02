@@ -32254,8 +32254,6 @@ async function addPRComments(commentingLines, file, existingComments, commentBod
       pull_number: context.payload.pull_request.number,
     });
 
-    console.log(pr)
-
     for (const line of commentingLines) {
       const existingComment = existingComments.find(comment => comment.path === file && comment.original_line === line);
       if (!existingComment) {
@@ -32297,10 +32295,10 @@ async function getCommentBody() {
 }
 
 async function addLabelIfNotExists(owner, repo, prNumber, labelName, labelColor) {
-  const { data: labels } = await octokit.rest.pulls.listLabelsOnIssue({
-    owner,
-    repo,
-    pull_number: prNumber,
+  const { data: { labels } } = await octokit.rest.pulls.get({
+    owner: context.repo.owner,
+    repo: context.repo.repo,
+    pull_number: context.payload.pull_request.number,
   });
 
   const labelExists = labels.some(label => label.name === labelName);
