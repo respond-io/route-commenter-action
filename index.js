@@ -219,7 +219,7 @@ async function addLabelIfNotExists(owner, repo, prNumber, labelName, labelColor)
   const labelExists = labels.some(label => label.name === labelName);
 
   if (!labelExists) {
-    await octokit.rest.pulls.addLabels({
+    await octokit.rest.issues.addLabels({
       owner,
       repo,
       pull_number: prNumber,
