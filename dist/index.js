@@ -32304,18 +32304,11 @@ async function addLabelIfNotExists(owner, repo, prNumber, labelName, labelColor)
   const labelExists = labels.some(label => label.name === labelName);
 
   if (!labelExists) {
-    await octokit.rest.issues.addLabels({
+    await octokit.rest.issues.createLabel({
       owner,
       repo,
       pull_number: prNumber,
       labels: [labelName],
-    });
-
-    await octokit.rest.pulls.updateLabel({
-      owner,
-      repo,
-      name: labelName,
-      color: labelColor,
     });
   }
 }
