@@ -169,6 +169,8 @@ async function addPRComments(commentingLines, file, existingComments, commentBod
       pull_number: context.payload.pull_request.number,
     });
 
+    console.log(pr)
+
     for (const line of commentingLines) {
       const existingComment = existingComments.find(comment => comment.path === file && comment.original_line === line);
       if (!existingComment) {
