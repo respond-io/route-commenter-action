@@ -341,8 +341,9 @@ async function main() {
         });
 
       const routes = detectRoutesInFile(file, changedLines);
+      console.log('----------1', routes, changedLines, file);
       const commentingLines = getCommentingLines(routes, changedLines);
-
+      console.log('----------2', commentingLines);
       const existingComments = await getExistingComments(context.repo.owner, context.repo.repo, context.payload.pull_request.number, botUsername);
 
       const status = await addPRComments(commentingLines, file, existingComments, commentBody);
