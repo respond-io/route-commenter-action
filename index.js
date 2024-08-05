@@ -325,7 +325,6 @@ async function main() {
 
   for (const file of changedFiles) {
     if (file.startsWith(rootPath) && file.includes('routes') && file.endsWith('.js')) {
-      const diffHunks = await getDiffHunks(file);
       const diffOutput = execSync(`git diff --unified=0 HEAD~1 HEAD ${file}`).toString();
       const changedLines = diffOutput
         .split('\n')
@@ -340,8 +339,21 @@ async function main() {
           return [];
         });
 
+      const deletedLines = diffOutput
+        .split('\n')
+        .filter(line => line.startsWith('@@'))
+        .flatMap(line => {
+          const match = line.match(/\-(\d+)(,\d+)?/);
+          if (match) {
+            const start = parseInt(match[1], 10);
+            const count = match[2] ? parseInt(match[2].substring(1), 10) : 1;
+            return Array.from({ length: count }, (_, i) => start + i);
+          }
+          return [];
+        });
+
       const routes = detectRoutesInFile(file, changedLines);
-      console.log('----------1', routes, changedLines, file);
+      console.log('----------1', routes, changedLines, deletedLines, file);
       const commentingLines = getCommentingLines(routes, changedLines);
       console.log('----------2', commentingLines);
       const existingComments = await getExistingComments(context.repo.owner, context.repo.repo, context.payload.pull_request.number, botUsername);
@@ -350,6 +362,7 @@ async function main() {
       commentAdded = commentAdded || status.commentAdded;
     }
   }
+
 
   if (commentAdded) {
     // Request changes after adding comments
