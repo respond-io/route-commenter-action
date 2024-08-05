@@ -34,7 +34,8 @@ jobs:
       uses: hasithaishere/route-commenter-action@main
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        INPUT_COMMENT_CONTENT_FILE: '.github/config/route-comment-content.md'
+        INPUT_COMMENT_CONTENT_FILE: '.github/config/route-comment-content.md' # Optional: has hardcoded default content
+        INPUT_TAG_NAME: 'change-route' # Optional: default is 'change-route'
 ```
 
 Create a route comment content file in your repository (e.g., `.github/config/route-comment-content.md`):
@@ -50,6 +51,23 @@ Create a route comment content file in your repository (e.g., `.github/config/ro
 ```
 This content file will be optional and the default content will be used if not provided.
 
+## For Maintainers
+
+As general, this Github action also use ncc to package the code in to single js file. So in the development please globally install ncc first.
+
+```sh
+npm i -g @vercel/ncc --save
+```
+
+After your development, please execute following command for building the package file, then push the code to GitHub.
+
+```sh
+npm run build
+```
+
+## Developers
+
+- [Hasitha Gamage](hasitha@rocketbots.io)
 
 ## License
 
