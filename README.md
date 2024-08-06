@@ -31,7 +31,7 @@ jobs:
         fetch-depth: 0
 
     - name: Route Commenter Action
-      uses: hasithaishere/route-commenter-action@main
+      uses: respond-io/route-commenter-action@main
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         INPUT_COMMENT_CONTENT_FILE: '.github/config/route-comment-content.md' # Optional: has hardcoded default content
