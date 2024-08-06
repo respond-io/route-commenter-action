@@ -81,19 +81,12 @@ async function detectRoutesInFile(filePath, changedLines, type = 'modified') {
   if (type === 'modified') {
     data = fs.readFileSync(filePath, 'utf8');
   } else if (type === 'deleted') {
-    // console.log({
-    //   owner: context.repo.owner,
-    //   repo: context.repo.repo,
-    //   path: filePath,
-    //   ref: context.payload.pull_request.base.ref
-    // });
     const fileContent = await octokit.repos.getContent({
       owner: context.repo.owner,
       repo: context.repo.repo,
       path: filePath,
       ref: context.payload.pull_request.base.ref
     });
-    // console.log('fileContent', fileContent);
     data = Buffer.from(fileContent.data.content, 'base64').toString('utf8');
   }
   const lines = data.split('\n');
@@ -227,9 +220,6 @@ async function getExistingComments(owner, repo, pullNumber, botUsername) {
     repo,
     pull_number: pullNumber,
   });
-
-  console.log('comments', comments);
-
   return comments.filter(comment => comment.user.login === botUsername);
 }
 
@@ -372,19 +362,15 @@ async function main() {
           return [];
         });
 
-      const routes = await detectRoutesInFile(file, changedLines);
-      //console.log('----------1', routes, changedLines, file);
-      const commentingLinesModified = getCommentingLines(routes, changedLines);
-      //console.log('----------2', commentingLines);
-      const existingComments = await getExistingComments(context.repo.owner, context.repo.repo, context.payload.pull_request.number, botUsername);
+      const newBranchRoutes = await detectRoutesInFile(file, changedLines);
+      const commentingLinesModified = getCommentingLines(newBranchRoutes, changedLines);
 
       const baseBranchRoutes = await detectRoutesInFile(file, deletedLines, 'deleted');
-      //console.log('----------3', baseBranchRoutes, deletedLines, file);
       const commentingLinesDeleted = getCommentingLines(baseBranchRoutes, deletedLines);
-      //console.log('----------4', commentingLinesDeleted);
+
+      const existingComments = await getExistingComments(context.repo.owner, context.repo.repo, context.payload.pull_request.number, botUsername);
       const modifiedExistingComments = [];
       const deletedExistingComments = [];
-
       for (const existingComment of existingComments) {
         if (existingComment.side === 'RIGHT') {
           modifiedExistingComments.push(existingComment);
@@ -392,11 +378,10 @@ async function main() {
           deletedExistingComments.push(existingComment);
         }
       }
-      //const existingCommentsDeleted = await getExistingComments(context.repo.owner, context.repo.repo, context.payload.pull_request.number, botUsername);
-      console.log('----------5', modifiedExistingComments.length, deletedExistingComments.length);
 
       const modifiedCommentStatus = await addPRComments(commentingLinesModified, file, modifiedExistingComments, commentBody);
       const deletedCommentStatus = await addPRComments(commentingLinesDeleted, file, deletedExistingComments, commentBody, 'LEFT');
+
       commentAdded = commentAdded || modifiedCommentStatus.commentAdded || deletedCommentStatus.commentAdded;
     }
   }
