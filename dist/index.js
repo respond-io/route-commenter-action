@@ -32166,19 +32166,19 @@ async function detectRoutesInFile(filePath, changedLines, type = 'modified') {
   if (type === 'modified') {
     data = fs.readFileSync(filePath, 'utf8');
   } else if (type === 'deleted') {
-    console.log({
-      owner: context.repo.owner,
-      repo: context.repo.repo,
-      path: filePath,
-      ref: context.payload.pull_request.base.ref
-    });
+    // console.log({
+    //   owner: context.repo.owner,
+    //   repo: context.repo.repo,
+    //   path: filePath,
+    //   ref: context.payload.pull_request.base.ref
+    // });
     const fileContent = await octokit.repos.getContent({
       owner: context.repo.owner,
       repo: context.repo.repo,
       path: filePath,
       ref: context.payload.pull_request.base.ref
     });
-    console.log('fileContent', fileContent);
+    // console.log('fileContent', fileContent);
     data = Buffer.from(fileContent.data.content, 'base64').toString('utf8');
   }
   const lines = data.split('\n');
@@ -32313,6 +32313,8 @@ async function getExistingComments(owner, repo, pullNumber, botUsername) {
     pull_number: pullNumber,
   });
 
+  console.log('comments', comments);
+
   return comments.filter(comment => comment.user.login === botUsername);
 }
 
@@ -32324,7 +32326,7 @@ async function getExistingComments(owner, repo, pullNumber, botUsername) {
  * @param {string} commentBody - The body of the comment to add.
  * @returns {Promise<Object>} - An object indicating whether a comment was added.
  */
-async function addPRComments(commentingLines, file, existingComments, commentBody) {
+async function addPRComments(commentingLines, file, existingComments, commentBody, side = 'RIGHT') {
   let commentAdded = false;
   if (commentingLines.length > 0) {
     const { data: pr } = await octokit.rest.pulls.get({
@@ -32344,7 +32346,7 @@ async function addPRComments(commentingLines, file, existingComments, commentBod
           commit_id: pr.head.sha,
           path: file,
           line: line,
-          side: 'RIGHT',
+          side
         });
 
         commentAdded = true;
@@ -32456,15 +32458,16 @@ async function main() {
         });
 
       const routes = await detectRoutesInFile(file, changedLines);
-      console.log('----------1', routes, changedLines, file);
+      //console.log('----------1', routes, changedLines, file);
       const commentingLines = getCommentingLines(routes, changedLines);
-      console.log('----------2', commentingLines);
+      //console.log('----------2', commentingLines);
       const existingComments = await getExistingComments(context.repo.owner, context.repo.repo, context.payload.pull_request.number, botUsername);
 
       const baseBranchRoutes = await detectRoutesInFile(file, deletedLines, 'deleted');
-      console.log('----------3', baseBranchRoutes, deletedLines, file);
+      //console.log('----------3', baseBranchRoutes, deletedLines, file);
       const commentingLinesDeleted = getCommentingLines(baseBranchRoutes, deletedLines);
       console.log('----------4', commentingLinesDeleted);
+      //const existingCommentsDeleted = await getExistingComments(context.repo.owner, context.repo.repo, context.payload.pull_request.number, botUsername);
 
 
       const status = await addPRComments(commentingLines, file, existingComments, commentBody);
