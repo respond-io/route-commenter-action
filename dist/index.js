@@ -32161,8 +32161,26 @@ function getRouteFiles(folderPath) {
  * @param {number[]} changedLines - An array of line numbers that have changed in the file.
  * @returns {Object[]} - An array of route objects that have changed.
  */
-function detectRoutesInFile(filePath, changedLines) {
-  const data = fs.readFileSync(filePath, 'utf8');
+async function detectRoutesInFile(filePath, changedLines, type = 'modified') {
+  let data = '';
+  if (type === 'modified') {
+    data = fs.readFileSync(filePath, 'utf8');
+  } else if (type === 'deleted') {
+    console.log({
+      owner: context.repo.owner,
+      repo: context.repo.repo,
+      path: filePath,
+      ref: context.payload.pull_request.base.ref
+    });
+    const fileContent = await octokit.repos.getContent({
+      owner: context.repo.owner,
+      repo: context.repo.repo,
+      path: filePath,
+      ref: context.payload.pull_request.base.ref
+    });
+    console.log('fileContent', fileContent);
+    data = Buffer.from(fileContent.data.content, 'base64').toString('utf8');
+  }
   const lines = data.split('\n');
   let routerVariable = null;
   let insideRoute = false;
@@ -32437,11 +32455,17 @@ async function main() {
           return [];
         });
 
-      const routes = detectRoutesInFile(file, changedLines);
-      console.log('----------1', routes, changedLines, deletedLines, file);
+      const routes = await detectRoutesInFile(file, changedLines);
+      console.log('----------1', routes, changedLines, file);
       const commentingLines = getCommentingLines(routes, changedLines);
       console.log('----------2', commentingLines);
       const existingComments = await getExistingComments(context.repo.owner, context.repo.repo, context.payload.pull_request.number, botUsername);
+
+      const baseBranchRoutes = await detectRoutesInFile(file, deletedLines, 'deleted');
+      console.log('----------3', baseBranchRoutes, deletedLines, file);
+      const commentingLinesDeleted = getCommentingLines(baseBranchRoutes, deletedLines);
+      console.log('----------4', commentingLinesDeleted);
+
 
       const status = await addPRComments(commentingLines, file, existingComments, commentBody);
       commentAdded = commentAdded || status.commentAdded;
