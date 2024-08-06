@@ -32459,7 +32459,7 @@ async function main() {
 
       const routes = await detectRoutesInFile(file, changedLines);
       //console.log('----------1', routes, changedLines, file);
-      const commentingLines = getCommentingLines(routes, changedLines);
+      const commentingLinesModified = getCommentingLines(routes, changedLines);
       //console.log('----------2', commentingLines);
       const existingComments = await getExistingComments(context.repo.owner, context.repo.repo, context.payload.pull_request.number, botUsername);
 
@@ -32478,9 +32478,9 @@ async function main() {
         }
       }
       //const existingCommentsDeleted = await getExistingComments(context.repo.owner, context.repo.repo, context.payload.pull_request.number, botUsername);
-      console.log('----------5', modifiedExistingComments.length, deletedCommentStatus.length);
+      console.log('----------5', modifiedExistingComments.length, deletedExistingComments.length);
 
-      const modifiedCommentStatus = await addPRComments(commentingLines, file, modifiedExistingComments, commentBody);
+      const modifiedCommentStatus = await addPRComments(commentingLinesModified, file, modifiedExistingComments, commentBody);
       const deletedCommentStatus = await addPRComments(commentingLinesDeleted, file, deletedExistingComments, commentBody, 'LEFT');
       commentAdded = commentAdded || modifiedCommentStatus.commentAdded || deletedCommentStatus.commentAdded;
     }
