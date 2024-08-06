@@ -32466,12 +32466,23 @@ async function main() {
       const baseBranchRoutes = await detectRoutesInFile(file, deletedLines, 'deleted');
       //console.log('----------3', baseBranchRoutes, deletedLines, file);
       const commentingLinesDeleted = getCommentingLines(baseBranchRoutes, deletedLines);
-      console.log('----------4', commentingLinesDeleted);
+      //console.log('----------4', commentingLinesDeleted);
+      const modifiedExistingComments = [];
+      const deletedExistingComments = [];
+
+      for (const existingComment of existingComments) {
+        if (existingComment.side === 'RIGHT') {
+          modifiedExistingComments.push(existingComment);
+        } else if (existingComment.side === 'LEFT') {
+          deletedExistingComments.push(existingComment);
+        }
+      }
       //const existingCommentsDeleted = await getExistingComments(context.repo.owner, context.repo.repo, context.payload.pull_request.number, botUsername);
+      console.log('----------5', modifiedExistingComments.length, deletedCommentStatus.length);
 
-
-      const status = await addPRComments(commentingLines, file, existingComments, commentBody);
-      commentAdded = commentAdded || status.commentAdded;
+      const modifiedCommentStatus = await addPRComments(commentingLines, file, modifiedExistingComments, commentBody);
+      const deletedCommentStatus = await addPRComments(commentingLinesDeleted, file, deletedExistingComments, commentBody, 'LEFT');
+      commentAdded = commentAdded || modifiedCommentStatus.commentAdded || deletedCommentStatus.commentAdded;
     }
   }
 
