@@ -1,6 +1,6 @@
 {
   "name": "route-commenter-action",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A GitHub Action to add comments to changed routes in PRs.",
   "main": "index.js",
   "scripts": {

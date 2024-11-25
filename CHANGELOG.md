@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/respond-io/route-commenter-action/compare/v1.1.0...v1.1.1) (2024-11-25)
+
+
+### Bug Fixes
+
+* Change the review type from REQUEST_CHANGES to COMMENT ([c6f9563](https://github.com/respond-io/route-commenter-action/commit/c6f9563c93f819475ccdb66cc7ae901437071a1e))
+
 ## [1.1.0](https://github.com/respond-io/route-commenter-action/compare/v1.0.0...v1.1.0) (2024-08-06)
 
 
