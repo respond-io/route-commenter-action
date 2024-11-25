@@ -32478,7 +32478,7 @@ async function main() {
       owner: context.repo.owner,
       repo: context.repo.repo,
       pull_number: context.payload.pull_request.number,
-      event: 'REQUEST_CHANGES',
+      event: 'COMMENT',
       body: 'Please address the comments related to the route changes.',
     });
 
